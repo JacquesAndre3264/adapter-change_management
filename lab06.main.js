@@ -1,7 +1,5 @@
-
 // Import built-in Node.js package path.
 const path = require('path');
-
 
 /**
  * Import the ServiceNowConnector class from local Node.js module connector.js
@@ -11,14 +9,12 @@ const path = require('path');
  */
 const ServiceNowConnector = require(path.join(__dirname, '/connector.js'));
 
-
 /**
  * Import built-in Node.js package events' EventEmitter class and
  * assign it to constant EventEmitter. We will create a child class
  * from this class.
  */
 const EventEmitter = require('events').EventEmitter;
-
 
 /**
  * The ServiceNowAdapter class.
@@ -29,7 +25,6 @@ const EventEmitter = require('events').EventEmitter;
  *   class.
  */
 class ServiceNowAdapter extends EventEmitter {
-
 
   /**
    * Here we document the ServiceNowAdapter class' callback. It must follow IAP's
@@ -73,7 +68,6 @@ class ServiceNowAdapter extends EventEmitter {
     });
   }
 
-
   /**
    * @memberof ServiceNowAdapter
    * @method connect
@@ -89,8 +83,7 @@ class ServiceNowAdapter extends EventEmitter {
     this.healthcheck();
   }
 
-
-/**
+ /**
  * @memberof ServiceNowAdapter
  * @method healthcheck
  * @summary Check ServiceNow Health
@@ -122,10 +115,6 @@ healthcheck(callback) {
       * for the callback's errorMessage parameter.
       */
       this.emitOffline();
-      log.error("ServiceNow Adapter ERROR: ID=" + this.id);
-      if(callback){
-        callback(result,error);
-      }
    } else {
      /**
       * Write this block.
@@ -138,29 +127,9 @@ healthcheck(callback) {
       * responseData parameter.
       */
       this.emitOnline();
-      //debug logging does not function as the adapter logging from GUI is set to info (and higher)
-      //so I have changed this to log.info for Final Project
-      log.info("ServiceNow Adapter ONLINE: ID=" + this.id);
-      if(callback){
-        callback(result,error);
-      }
    }
  });
-}
-
-
-  /**
-   * @memberof ServiceNowAdapter
-   * @method emitOffline
-   * @summary Emit OFFLINE
-   * @description Emits an OFFLINE event to IAP indicating the external
-   *   system is not available.
-   */
-  emitOffline() {
-    this.emitStatus('OFFLINE');
-    log.warn('Service is unavailable.');
-  }
-
+} 
 
   /**
    * @memberof ServiceNowAdapter
@@ -171,9 +140,8 @@ healthcheck(callback) {
    */
   emitOnline() {
     this.emitStatus('ONLINE');
-    log.info('Service is available.');
+    log.info('ServiceNow: Instance is available.');
   }
-
 
   /**
    * @memberof ServiceNowAdapter
@@ -187,7 +155,6 @@ healthcheck(callback) {
   emitStatus(status) {
     this.emit(status, { id: this.id });
   }
-
 
   /**
    * @memberof ServiceNowAdapter
@@ -205,33 +172,8 @@ healthcheck(callback) {
      * Note how the object was instantiated in the constructor().
      * get() takes a callback function.
      */
-     this.connector.get((data,error) => {
-       if(error){
-           callback(data,error);
-       }else{
-         if(data.body){
-           // data logging test: tail -f /var/log/pronghorn/ServiceNow\ Change.log
-           //log.info(data.body);
-           let bodyObj = JSON.parse(data.body);
-           let chgTkts = [];
-           bodyObj.result.forEach((item) => {
-               let chgTkt = {
-                   active: item.active,
-                   change_ticket_key: item.sys_id,
-                   change_ticket_number: item.number,
-                   description: item.description,
-                   priority: item.priority,
-                   work_start: item.work_start,
-                   work_end: item.work_end
-                   }
-               chgTkts.push(chgTkt);
-           });
-           callback(chgTkts,error);
-         }
-       }
-     })
+     this.connector.get(callback)
   }
-
 
   /**
    * @memberof ServiceNowAdapter
@@ -249,28 +191,8 @@ healthcheck(callback) {
      * Note how the object was instantiated in the constructor().
      * post() takes a callback function.
      */
-     this.connector.post((data,error) => {
-       if(error){
-           callback(data,error);
-       }else{
-         if(data.body){
-           let bodyObj = JSON.parse(data.body);
-           let item = bodyObj.result;
-           let chgTicket = {
-                   active: item.active,
-                   change_ticket_key: item.sys_id,
-                   change_ticket_number: item.number,
-                   description: item.description,
-                   priority: item.priority,
-                   work_start: item.work_start,
-                   work_end: item.work_end
-                   }
-           callback(chgTicket,error);
-         }
-       }
-     });
+     this.connector.post(callback)
   }
 }
-
 
 module.exports = ServiceNowAdapter;
